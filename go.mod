@@ -16,7 +16,7 @@ require (
 	github.com/valyala/fasthttp v1.59.0
 	github.com/xtls/xray-core v1.8.25-0.20250303153022-e15dff94b5bd
 	go.uber.org/atomic v1.11.0
-	golang.org/x/text v0.22.0
+	golang.org/x/text v0.23.0
 	google.golang.org/grpc v1.71.0
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.25.12
