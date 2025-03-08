@@ -162,21 +162,32 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Fetch latest changes to avoid conflicts
+          # Fetch latest changes
           git fetch origin
           
-          # Check if local branch is behind remote
-          if git rev-list --count HEAD..origin/${{ github.ref_name }} > /dev/null 2>&1; then
-            echo "Local branch is behind remote. Pulling latest changes..."
-            git pull --rebase origin ${{ github.ref_name }}
+          # First, stash our changes to go.mod and go.sum to prevent rebase conflicts
+          git add go.mod go.sum
+          git stash
+          
+          # Pull latest changes with rebase
+          git pull --rebase origin ${{ github.ref_name }}
+          
+          # Apply our stashed changes
+          git stash pop
+          
+          # Check if we have conflicts after pop
+          if git status | grep -q "Unmerged paths"; then
+            echo "Conflicts detected after stash pop. Using our version of go.mod and go.sum"
+            git checkout --ours -- go.mod go.sum
+            git add go.mod go.sum
           fi
           
-          git add go.mod go.sum
+          # Commit changes
           git commit -m "chore(deps): update Go dependencies
           
           Automated update of Go dependencies including xray-core to latest release ${{ env.latest_tag }}"
           
-          # Push with retries and better conflict handling
+          # Push with retries
           max_attempts=3
           attempt=1
           
@@ -192,18 +203,14 @@ jobs:
               echo "Push failed on attempt $attempt, retrying..."
               attempt=$((attempt + 1))
               
-              # Pull with rebase to resolve conflicts
-              git fetch origin
-              git pull --rebase origin ${{ github.ref_name }}
-              
-              # Check for conflicts
-              if git diff --name-only --diff-filter=U | grep -q .; then
-                echo "Merge conflicts detected. Using our version of go.mod and go.sum"
-                git checkout --ours go.mod go.sum
-                git add go.mod go.sum
-                git rebase --continue
+              # Try again with force-with-lease for safer force pushing
+              if [ $attempt -eq $max_attempts ]; then
+                echo "Last attempt, trying force-with-lease..."
+                git push --force-with-lease origin ${{ github.ref }}
+                break
               fi
               
+              # If here, we'll try again after a short delay
               sleep 5
             fi
           done
