@@ -2,22 +2,23 @@ name: Update Go Dependencies
 
 on:
   schedule:
-    - cron: '0 0 * * 1'  # Run every Monday at 00:00 UTC
-  workflow_dispatch:     # Allow manual trigger
+    - cron: '0 0 * * 1'  # Запуск каждую неделю в понедельник в 00:00 UTC
+  workflow_dispatch:      # Возможность ручного запуска
 
 permissions:
-  contents: write        # Explicit permission for repo contents
+  contents: write        # Явное указание разрешений
 
 jobs:
   update:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30  # Prevent hanging jobs
+    runs-on: ubuntu-latest  # Используем последнюю версию Ubuntu
+    
+    timeout-minutes: 30     # Добавляем таймаут для предотвращения зависания
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0    # Get full history
+          fetch-depth: 0    # Загружаем всю историю
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Go
@@ -25,53 +26,21 @@ jobs:
         with:
           go-version-file: go.mod
           check-latest: true
-          cache: true       # Enable module caching
-
-      - name: Validate Go environment
-        run: |
-          go version
-          if [ ! -f go.mod ]; then
-            echo "Error: go.mod file not found"
-            exit 1
-          fi
-          
-          # Initialize go.sum if missing
-          if [ ! -f go.sum ]; then
-            echo "go.sum file not found, initializing it..."
-            go mod tidy
-          fi
+          cache: true       # Включаем кэширование модулей
 
       - name: Fetch latest Xray-core release
         id: get_latest_release
         run: |
-          # Get releases list with error handling
-          API_RESPONSE=$(curl -s -f https://api.github.com/repos/XTLS/Xray-core/releases)
-          if [ $? -ne 0 ]; then
-            echo "Error fetching releases from GitHub API"
-            exit 1
-          fi
+          # Получаем список релизов
+          API_RESPONSE=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases)
 
-          # Extract latest stable tag
+          # Извлекаем последний стабильный тег (например, v25.2.21)
           LATEST_TAG=$(echo "$API_RESPONSE" | jq -r 'map(select(.prerelease == false)) | .[0].tag_name')
-          if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
-            echo "Error: Could not determine latest release tag"
-            exit 1
-          fi
 
-          # Get the commit SHA for this tag
-          TAG_RESPONSE=$(curl -s -f "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/${LATEST_TAG}")
-          if [ $? -ne 0 ]; then
-            echo "Error fetching tag details from GitHub API"
-            exit 1
-          fi
+          # Находим конкретный commit SHA для этого тега
+          COMMIT_HASH=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/${LATEST_TAG}" | jq -r .object.sha)
 
-          COMMIT_HASH=$(echo "$TAG_RESPONSE" | jq -r .object.sha)
-          if [ -z "$COMMIT_HASH" ] || [ "$COMMIT_HASH" = "null" ]; then
-            echo "Error: Could not determine commit hash for tag $LATEST_TAG"
-            exit 1
-          fi
-
-          # Generate Go pseudo-version
+          # Генерируем псевдоверсию Go (v1.8.25-0.<date>-<commit>)
           GO_VERSION="v1.8.25-0.$(date -u +%Y%m%d%H%M%S)-$COMMIT_HASH"
 
           echo "Latest release: $LATEST_TAG (commit: $COMMIT_HASH, go version: $GO_VERSION)"
@@ -79,20 +48,28 @@ jobs:
           echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV
           echo "go_version=$GO_VERSION" >> $GITHUB_ENV
 
+      - name: Check go.mod and go.sum exist
+        run: |
+          if [ ! -f go.mod ]; then
+            echo "Error: go.mod file not found"
+            exit 1
+          fi
+          
+          # Проверка наличия go.sum и создание, если отсутствует
+          if [ ! -f go.sum ]; then
+            echo "go.sum file not found, initializing it..."
+            go mod tidy
+          fi
+
       - name: Clean Go module cache
         run: |
           go clean -modcache
           go clean -cache
 
-      - name: Backup current dependencies
-        run: |
-          cp go.mod go.mod.backup
-          cp go.sum go.sum.backup
-
       - name: Update dependencies
         id: update
         run: |
-          set -euo pipefail  # Strict bash mode
+          set -euo pipefail  # Строгий режим для bash
 
           echo "Updating standard Go dependencies..."
           go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all | \
@@ -108,41 +85,10 @@ jobs:
           go list -m github.com/xtls/xray-core
 
           go mod tidy
-          if ! go mod verify; then
-            echo "Error: Module verification failed"
-            exit 1
-          fi
+          go mod verify || exit 1
 
           echo "Updated dependencies:"
           go list -m all
-
-      - name: Run build tests
-        id: build_test
-        run: |
-          echo "Running build tests to verify updates..."
-          if ! go build ./...; then
-            echo "Error: Build failed after dependency updates"
-            echo "Restoring original dependencies..."
-            cp go.mod.backup go.mod
-            cp go.sum.backup go.sum
-            exit 1
-          fi
-          
-          # Optional: Run actual tests if you have them
-          if [ -d "./tests" ] || grep -q "_test.go" $(find . -name "*.go"); then
-            echo "Running tests..."
-            if ! go test ./...; then
-              echo "Error: Tests failed after dependency updates"
-              echo "Restoring original dependencies..."
-              cp go.mod.backup go.mod
-              cp go.sum.backup go.sum
-              exit 1
-            fi
-          else
-            echo "No tests found, skipping test step"
-          fi
-          
-          echo "Build tests passed successfully!"
 
       - name: Check for changes
         id: check
@@ -162,32 +108,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Fetch latest changes
-          git fetch origin
-          
-          # First, stash our changes to go.mod and go.sum to prevent rebase conflicts
           git add go.mod go.sum
-          git stash
-          
-          # Pull latest changes with rebase
-          git pull --rebase origin ${{ github.ref_name }}
-          
-          # Apply our stashed changes
-          git stash pop
-          
-          # Check if we have conflicts after pop
-          if git status | grep -q "Unmerged paths"; then
-            echo "Conflicts detected after stash pop. Using our version of go.mod and go.sum"
-            git checkout --ours -- go.mod go.sum
-            git add go.mod go.sum
-          fi
-          
-          # Commit changes
           git commit -m "chore(deps): update Go dependencies
           
           Automated update of Go dependencies including xray-core to latest release ${{ env.latest_tag }}"
           
-          # Push with retries
+          # Попытка push с повторами при ошибках
           max_attempts=3
           attempt=1
           
@@ -202,15 +128,7 @@ jobs:
               fi
               echo "Push failed on attempt $attempt, retrying..."
               attempt=$((attempt + 1))
-              
-              # Try again with force-with-lease for safer force pushing
-              if [ $attempt -eq $max_attempts ]; then
-                echo "Last attempt, trying force-with-lease..."
-                git push --force-with-lease origin ${{ github.ref }}
-                break
-              fi
-              
-              # If here, we'll try again after a short delay
+              git pull --rebase
               sleep 5
             fi
           done
