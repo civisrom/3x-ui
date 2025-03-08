@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/gin-contrib/gzip v1.0.1
-	github.com/gin-contrib/sessions v1.0.1
+	github.com/gin-contrib/sessions v1.0.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/goccy/go-json v0.10.4
 	github.com/mymmrac/telego v0.31.4
