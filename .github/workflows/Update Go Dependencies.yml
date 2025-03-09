@@ -45,18 +45,13 @@ jobs:
           go clean -modcache
           go clean -cache
 
-      - name: Exclude specific dependencies from updates
-        run: |
-          go mod edit -exclude=gvisor.dev/gvisor
-          go mod edit -exclude=github.com/mymmrac/telego
-
       - name: Update dependencies including transitive ones
         id: update
         run: |
           set -euo pipefail  # Строгий режим для bash
 
           echo "Updating all dependencies including transitive ones, except gvisor and telego..."
-          go get -u -d ./...
+          go list -m all | awk '{print $1}' | grep -v -E '^(gvisor.dev/gvisor|github.com/mymmrac/telego)$' | xargs -r go get -u -d
 
           echo "Tidying up modules..."
           go mod tidy
