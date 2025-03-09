@@ -16,3 +16,4 @@ jobs:
           go-version-file: go.mod
       - name: Run tests
         run: go test ./...
+        timeout-minutes: 10
