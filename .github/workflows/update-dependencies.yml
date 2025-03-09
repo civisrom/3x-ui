@@ -90,6 +90,7 @@ jobs:
         if: steps.check.outputs.changes == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.GH_PAT }}  # Используем персональный токен
           commit-message: "chore(deps): update Go dependencies"
           branch: "update-deps"
           title: "Update Go dependencies"
