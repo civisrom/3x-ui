@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # 1. Обновление Go-зависимостей
+  # Обновление всех Go-зависимостей (прямых и транзитивных)
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
@@ -21,34 +21,11 @@ updates:
       - dependency-name: "gvisor.dev/gvisor"
       - dependency-name: "github.com/mymmrac/telego"
     allow:
-      - dependency-type: "all"
+      - dependency-type: "all"      # Обновление всех зависимостей
+      - dependency-type: "indirect"  # Включаем транзитивные зависимости
     rebase-strategy: "auto"
 
-  # 2. Обновление транзитивных Go-зависимостей
-  - package-ecosystem: "gomod"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "tuesday"
-      time: "00:00"
-      timezone: "UTC"
-    open-pull-requests-limit: 120
-    reviewers:
-      - "civisrom"
-    labels:
-      - "dependencies"
-      - "go"
-      - "indirect-deps"
-    commit-message:
-      prefix: "chore(deps-indirect)"
-      include: "scope"
-    ignore:
-      - dependency-name: "gvisor.dev/gvisor"
-      - dependency-name: "github.com/mymmrac/telego"
-    allow:
-      - dependency-type: "indirect"
-
-  # 3. Обновление GitHub Actions
+  # Обновление GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -70,7 +47,7 @@ updates:
         patterns:
           - "*"
 
-  # 4. Обновление Docker-зависимостей
+  # Обновление Docker-зависимостей
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
