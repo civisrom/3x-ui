@@ -21,19 +21,18 @@ updates:
       - dependency-name: "gvisor.dev/gvisor"
       - dependency-name: "github.com/mymmrac/telego"
     allow:
-      - dependency-type: "all"  # Разрешаем обновление всех типов зависимостей
-    rebase-strategy: "auto"  # Автоматически ребазить PR при конфликтах
+      - dependency-type: "all"
+    rebase-strategy: "auto"
 
-  # Отдельная конфигурация для транзитивных зависимостей
+  # 2. Обновление транзитивных Go-зависимостей
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "tuesday"  # Другой день для разделения обновлений
+      day: "tuesday"
       time: "00:00"
       timezone: "UTC"
     open-pull-requests-limit: 120
-    target-branch: "dependencies-update"  # Опционально: создаем отдельную ветку для тестирования
     reviewers:
       - "civisrom"
     labels:
@@ -47,14 +46,15 @@ updates:
       - dependency-name: "gvisor.dev/gvisor"
       - dependency-name: "github.com/mymmrac/telego"
     allow:
-      - dependency-type: "indirect"  # Фокусируемся только на косвенных зависимостях
-  
-  # 2. Обновление GitHub Actions
+      - dependency-type: "indirect"
+
+  # 3. Обновление GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "wednesday"
+      time: "00:00"
       timezone: "UTC"
     open-pull-requests-limit: 20
     reviewers:
@@ -69,13 +69,14 @@ updates:
       github-actions:
         patterns:
           - "*"
-          
-  # 3. Обновление Docker-зависимостей
+
+  # 4. Обновление Docker-зависимостей
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "friday"
+      time: "00:00"
       timezone: "UTC"
     open-pull-requests-limit: 20
     reviewers:
