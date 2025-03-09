@@ -2,13 +2,13 @@ version: 2
 updates:
   # 🔹 1. Обновление Go-зависимостей
   - package-ecosystem: "gomod"
-    directory: "/"  # Корень репозитория, где находится go.mod
+    directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"  # Добавлен день недели для запуска1
+      day: "monday"
       time: "00:00"
-      timezone: "UTC"  # Добавлена явная временная зона
-    open-pull-requests-limit: 120
+      timezone: "UTC"
+    open-pull-requests-limit: 120  # Увеличен лимит для обработки большего количества зависимостей
     reviewers:
       - "civisrom"
     labels:
@@ -20,17 +20,49 @@ updates:
     ignore:
       - dependency-name: "gvisor.dev/gvisor"
       - dependency-name: "github.com/mymmrac/telego"
+      # Если есть другие зависимости, которые хотите исключить из обновления
     allow:
-      - dependency-type: "all"
-      
+      - dependency-type: "all"  # Разрешаем обновление всех типов зависимостей
+    # Отключаем группировку полностью, чтобы зависимости обновлялись индивидуально
+    # Это позволит проще отследить проблемные обновления
+    # groups: {}
+    versioning-strategy: "auto"  # Автоматически определять тип версионирования
+    rebase-strategy: "auto"  # Автоматически ребазить PR при конфликтах
+
+  # Отдельная конфигурация для транзитивных зависимостей
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"  # Другой день для разделения обновлений
+      time: "00:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 120
+    target-branch: "dependencies-update"  # Опционально: создаем отдельную ветку для тестирования
+    reviewers:
+      - "civisrom"
+    labels:
+      - "dependencies"
+      - "go"
+      - "indirect-deps"
+    commit-message:
+      prefix: "chore(deps-indirect)"
+      include: "scope"
+    ignore:
+      - dependency-name: "gvisor.dev/gvisor"
+      - dependency-name: "github.com/mymmrac/telego"
+    allow:
+      - dependency-type: "indirect"  # Фокусируемся только на косвенных зависимостях
+    versioning-strategy: "increase-if-necessary"
+  
   # 🔹 2. Обновление GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "wednesday"  # Делаем обновление в другой день для распределения нагрузки
+      day: "wednesday"
       timezone: "UTC"
-    open-pull-requests-limit: 20
+      open-pull-requests-limit: 20
     reviewers:
       - "civisrom"
     labels:
@@ -49,9 +81,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "friday"  # Обновление в пятницу
+      day: "friday"
       timezone: "UTC"
-    open-pull-requests-limit: 20
+      open-pull-requests-limit: 20
     reviewers:
       - "civisrom"
     labels:
@@ -60,7 +92,3 @@ updates:
     commit-message:
       prefix: "chore(docker)"
       include: "scope"
-    # Исключение неиспользуемых или проблемных образов
-    # ignore:
-    #   - dependency-name: "node"
-    #     versions: ["13.x", "15.x"]
