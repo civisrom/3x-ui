@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # 🔹 1. Обновление Go-зависимостей
+  # 1. Обновление Go-зависимостей
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
@@ -49,7 +49,7 @@ updates:
     allow:
       - dependency-type: "indirect"  # Фокусируемся только на косвенных зависимостях
   
-  # 🔹 2. Обновление GitHub Actions
+  # 2. Обновление GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -70,7 +70,7 @@ updates:
         patterns:
           - "*"
           
-  # 🔹 3. Обновление Docker-зависимостей
+  # 3. Обновление Docker-зависимостей
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
