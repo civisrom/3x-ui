@@ -45,6 +45,15 @@ jobs:
           go clean -modcache
           go clean -cache
 
+      - name: Fix dependency paths
+        run: |
+          go mod edit -dropreplace github.com/bos-hieu/mongostore || true
+          go mod edit -dropreplace github.com/googleapis/gnostic || true
+          go get github.com/laziness-coders/mongostore@v0.0.14
+          go get github.com/google/gnostic@v0.7.0
+          go get github.com/BurntSushi/toml@v1.4.1-0.20240526193622-a339e1f7089c
+          go get github.com/davecgh/go-spew@v1.1.2-0.20180830191138-d8f796af33cc
+
       - name: Update dependencies including transitive ones
         id: update
         run: |
