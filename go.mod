@@ -1,22 +1,20 @@
 module x-ui
 
-go 1.24
-
-toolchain go1.24.1
+go 1.24.1
 
 require (
 	github.com/gin-contrib/gzip v1.2.2
 	github.com/gin-contrib/sessions v1.0.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/goccy/go-json v0.10.5
-	github.com/mymmrac/telego v0.31.4
+	github.com/mymmrac/telego v0.32.0
 	github.com/nicksnyder/go-i18n/v2 v2.5.1
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shirou/gopsutil/v4 v4.25.2
 	github.com/valyala/fasthttp v1.59.0
-	github.com/xtls/xray-core v1.250306.0
+	github.com/xtls/xray-core v1.8.25-0.20250306135015-2cba2c4d59e4
 	go.uber.org/atomic v1.11.0
 	golang.org/x/text v0.23.0
 	google.golang.org/grpc v1.71.0
@@ -26,13 +24,13 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.1.1 // indirect
-	github.com/bytedance/sonic v1.13.1 // indirect
-	github.com/bytedance/sonic/loader v0.2.4 // indirect
+	github.com/bytedance/sonic v1.12.10 // indirect
+	github.com/bytedance/sonic/loader v0.2.3 // indirect
 	github.com/cloudflare/circl v1.6.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
 	github.com/ebitengine/purego v0.8.2 // indirect
-	github.com/fasthttp/router v1.5.3 // indirect
+	github.com/fasthttp/router v1.5.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.0.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -66,7 +64,7 @@ require (
 	github.com/quic-go/quic-go v0.50.0 // indirect
 	github.com/refraction-networking/utls v1.6.7 // indirect
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
-	github.com/rogpeppe/go-internal v1.13.1 // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sagernet/sing v0.5.1 // indirect
 	github.com/sagernet/sing-shadowsocks v0.2.7 // indirect
 	github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38 // indirect
@@ -86,7 +84,7 @@ require (
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
 	golang.org/x/arch v0.15.0 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
-	golang.org/x/exp v0.0.0-20241215155358-4a5509556b9e // indirect
+	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67 // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
