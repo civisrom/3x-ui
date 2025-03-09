@@ -8,7 +8,7 @@ updates:
       day: "monday"  # Добавлен день недели для запуска1
       time: "00:00"
       timezone: "UTC"  # Добавлена явная временная зона
-    #open-pull-requests-limit: 5
+    open-pull-requests-limit: 60
     reviewers:
       - "civisrom"
     labels:
@@ -30,7 +30,7 @@ updates:
       interval: "weekly"
       day: "wednesday"  # Делаем обновление в другой день для распределения нагрузки
       timezone: "UTC"
-    #open-pull-requests-limit: 3
+    open-pull-requests-limit: 20
     reviewers:
       - "civisrom"
     labels:
@@ -51,7 +51,7 @@ updates:
       interval: "weekly"
       day: "friday"  # Обновление в пятницу
       timezone: "UTC"
-    #open-pull-requests-limit: 2
+    open-pull-requests-limit: 20
     reviewers:
       - "civisrom"
     labels:
