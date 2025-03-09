@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Обновление всех Go-зависимостей (прямых и транзитивных)
+  # Обновление всех Go-зависимостей (прямых и транзитивных)1
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
