@@ -28,34 +28,13 @@ jobs:
           check-latest: true
           cache: true       # Включаем кэширование модулей
 
-      - name: Fetch latest Xray-core release
-        id: get_latest_release
-        run: |
-          # Получаем список релизов
-          API_RESPONSE=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases)
-
-          # Извлекаем последний стабильный тег (например, v25.2.21)
-          LATEST_TAG=$(echo "$API_RESPONSE" | jq -r 'map(select(.prerelease == false)) | .[0].tag_name')
-
-          # Находим конкретный commit SHA для этого тега
-          COMMIT_HASH=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/${LATEST_TAG}" | jq -r .object.sha)
-
-          # Генерируем псевдоверсию Go (v1.8.25-0.<date>-<commit>)
-          GO_VERSION="v1.8.25-0.$(date -u +%Y%m%d%H%M%S)-$COMMIT_HASH"
-
-          echo "Latest release: $LATEST_TAG (commit: $COMMIT_HASH, go version: $GO_VERSION)"
-          echo "latest_tag=$LATEST_TAG" >> $GITHUB_ENV
-          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV
-          echo "go_version=$GO_VERSION" >> $GITHUB_ENV
-
-      - name: Check go.mod and go.sum exist
+      - name: Ensure go.mod and go.sum exist
         run: |
           if [ ! -f go.mod ]; then
             echo "Error: go.mod file not found"
             exit 1
           fi
           
-          # Проверка наличия go.sum и создание, если отсутствует
           if [ ! -f go.sum ]; then
             echo "go.sum file not found, initializing it..."
             go mod tidy
@@ -71,24 +50,15 @@ jobs:
         run: |
           set -euo pipefail  # Строгий режим для bash
 
-          echo "Updating standard Go dependencies..."
-          go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all | \
-            grep -v 'gvisor.dev/gvisor' | \
-            grep -v 'github.com/mymmrac/telego' | \
-            grep -v 'github.com/xtls/xray-core' | \
-            xargs -r go get -u
-          
-          echo "Updating Xray-core to release ${{ env.latest_tag }} (Go version: ${{ env.go_version }})"
-          go get github.com/xtls/xray-core@${{ env.commit_hash }}
+          echo "Updating all dependencies except gvisor and telego..."
+          go list -m all | awk '{print $1}' | grep -v -E '^(gvisor.dev/gvisor|github.com/mymmrac/telego)$' | xargs -r go get -u
 
-          echo "Updated Xray-core to:"
-          go list -m github.com/xtls/xray-core
-
+          echo "Tidying up modules..."
           go mod tidy
           go mod verify || exit 1
 
-          echo "Updated dependencies:"
-          go list -m all
+          echo "Updated dependencies:"  
+          go list -m -u all | grep -v "(deleting)" || true
 
       - name: Check for changes
         id: check
@@ -98,7 +68,7 @@ jobs:
             echo "No changes detected in dependencies"
           else
             echo "changes=true" >> $GITHUB_OUTPUT
-            echo "Changes detected in dependencies:"
+            echo "Changes detected in dependencies:" 
             git diff go.mod || true
           fi
 
@@ -109,9 +79,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
           git add go.mod go.sum
-          git commit -m "chore(deps): update Go dependencies
-          
-          Automated update of Go dependencies including xray-core to latest release ${{ env.latest_tag }}"
+          git commit -m "chore(deps): update Go dependencies"
           
           # Попытка push с повторами при ошибках
           max_attempts=3
