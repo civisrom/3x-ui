@@ -4,7 +4,8 @@ on:
     - cron: '0 0 * * 1'  # Запуск каждую неделю в понедельник в 00:00 UTC
   workflow_dispatch:      # Возможность ручного запуска
 permissions:
-  contents: write        # Явное указание разрешений
+  contents: write        # Разрешение на запись содержимого
+  pull-requests: write   # Явное разрешение на создание PR
 jobs:
   update:
     runs-on: ubuntu-latest  # Используем последнюю версию Ubuntu
@@ -15,7 +16,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0    # Загружаем всю историю
-          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -113,21 +113,45 @@ jobs:
         run: |
           if git status --porcelain | grep -qE "go\.mod|go\.sum|vendor"; then
             echo "changes=true" >> $GITHUB_OUTPUT
+            git diff go.mod || true
             echo "Changes detected in dependencies"
           else
             echo "changes=false" >> $GITHUB_OUTPUT
             echo "No changes detected"
           fi
       
+      - name: Configure Git
+        if: steps.check.outputs.changes == 'true'
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit changes directly
+        if: steps.check.outputs.changes == 'true'
+        run: |
+          # Создаем новую ветку
+          git checkout -b update-deps-$(date +%Y%m%d)
+          
+          # Добавляем изменения
+          git add go.mod go.sum vendor/ || true
+          
+          # Коммитим изменения
+          git commit -m "chore(deps): update Go dependencies"
+          
+          # Пушим ветку
+          git push origin update-deps-$(date +%Y%m%d)
+      
       - name: Create Pull Request
         if: steps.check.outputs.changes == 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # Используем встроенный токен GitHub Actions
-          commit-message: "chore(deps): update Go dependencies"
-          branch: "update-deps"
-          title: "Update Go dependencies"
-          body: |
-            # Автоматическое обновление зависимостей Go
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH_NAME="update-deps-$(date +%Y%m%d)"
+          
+          # Используем gh CLI для создания PR
+          gh pr create \
+            --base main \
+            --head $BRANCH_NAME \
+            --title "Update Go dependencies" \
+            --body "# Автоматическое обновление зависимостей Go
             Это PR создан автоматически для обновления зависимостей Go.
-          labels: "dependencies"
