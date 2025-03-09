@@ -21,15 +21,8 @@ updates:
       - dependency-name: "gvisor.dev/gvisor"
       - dependency-name: "github.com/mymmrac/telego"
     allow:
-      - dependency-type: "direct"
-    groups:
-      minor-patch-dependencies:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-          
+      - dependency-type: "all"
+      
   # 🔹 2. Обновление GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
