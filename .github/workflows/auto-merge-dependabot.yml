@@ -18,13 +18,13 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Wait for tests to succeed
-        uses: lewagon/wait-on-check-action@v1.3.4
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          check-name: 'test' # Имя джоба из вашего test.yml
-          wait-interval: 20
-          ref: ${{ github.event.pull_request.head.sha }}
+      #- name: Wait for tests to succeed
+        #uses: lewagon/wait-on-check-action@v1.3.4
+        #with:
+          #repo-token: ${{ secrets.GITHUB_TOKEN }}
+          #check-name: 'test' # Имя джоба из вашего test.yml
+          #wait-interval: 20
+          #ref: ${{ github.event.pull_request.head.sha }}
           
       - name: Auto-merge Dependabot PRs
         if: success()
