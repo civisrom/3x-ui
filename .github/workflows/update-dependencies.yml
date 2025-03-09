@@ -111,9 +111,9 @@ jobs:
       - name: Check for changes
         id: check
         run: |
-          if git status --porcelain | grep -qE "go\.mod|go\.sum|vendor"; then
+          git status
+          if git status --porcelain | grep -qE "go\.mod|go\.sum"; then
             echo "changes=true" >> $GITHUB_OUTPUT
-            git diff go.mod || true
             echo "Changes detected in dependencies"
           else
             echo "changes=false" >> $GITHUB_OUTPUT
@@ -132,8 +132,12 @@ jobs:
           # Создаем новую ветку
           git checkout -b update-deps-$(date +%Y%m%d)
           
-          # Добавляем изменения
-          git add go.mod go.sum vendor/ || true
+          # Явно добавляем измененные файлы
+          git add go.mod
+          git add go.sum
+          
+          # Проверяем статус перед коммитом
+          git status
           
           # Коммитим изменения
           git commit -m "chore(deps): update Go dependencies"
@@ -154,4 +158,10 @@ jobs:
             --head $BRANCH_NAME \
             --title "Update Go dependencies" \
             --body "# Автоматическое обновление зависимостей Go
+            
             Это PR создан автоматически для обновления зависимостей Go.
+            
+            ## Примечания
+            - Некоторые проблемные модули были исключены из автоматического обновления
+            - Исправлены пути импорта для модулей с изменившимися путями" \
+            --label dependencies || echo "PR уже существует или другая ошибка при создании PR"
