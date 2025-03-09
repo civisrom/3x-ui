@@ -58,11 +58,22 @@ jobs:
           # Зафиксировать версию go-spew для совместимости с k8s.io модулями
           go get github.com/davecgh/go-spew@v1.1.2-0.20180830191138-d8f796af33cc
           
-          # Исправление для mongostore
-          go mod edit -replace github.com/bos-hieu/mongostore=github.com/laziness-coders/mongostore@latest
+          # Исправление для mongostore - нужно указать конкретную версию
+          # Определяем последнюю версию mongostore
+          MONGOSTORE_VERSION=$(go list -m -versions github.com/laziness-coders/mongostore | awk '{print $NF}')
+          if [ -z "$MONGOSTORE_VERSION" ]; then
+            # Если версий нет, используем v0.0.0 чтобы Go попытался найти последний коммит
+            MONGOSTORE_VERSION="v0.0.0"
+          fi
+          go mod edit -replace github.com/bos-hieu/mongostore=github.com/laziness-coders/mongostore@$MONGOSTORE_VERSION
           
-          # Исправление для gnostic
-          go mod edit -replace github.com/googleapis/gnostic=github.com/google/gnostic@latest
+          # Исправление для gnostic - нужно указать конкретную версию
+          GNOSTIC_VERSION=$(go list -m -versions github.com/google/gnostic | awk '{print $NF}')
+          if [ -z "$GNOSTIC_VERSION" ]; then
+            # Если версий нет, используем v0.0.0
+            GNOSTIC_VERSION="v0.0.0"
+          fi
+          go mod edit -replace github.com/googleapis/gnostic=github.com/google/gnostic@$GNOSTIC_VERSION
           
           echo "Tidying up modules..."
           go mod tidy
