@@ -123,16 +123,11 @@ jobs:
         if: steps.check.outputs.changes == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GH_PAT }}  # Используем персональный токен
+          token: ${{ secrets.GITHUB_TOKEN }}  # Используем встроенный токен GitHub Actions
           commit-message: "chore(deps): update Go dependencies"
           branch: "update-deps"
           title: "Update Go dependencies"
           body: |
             # Автоматическое обновление зависимостей Go
-            
             Это PR создан автоматически для обновления зависимостей Go.
-            
-            ## Примечания
-            - Некоторые проблемные модули были исключены из автоматического обновления
-            - Исправлены пути импорта для модулей с изменившимися путями
           labels: "dependencies"
