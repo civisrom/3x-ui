@@ -39,7 +39,7 @@ require (
 	github.com/go-playground/validator/v10 v10.25.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/pprof v0.0.0-20241101162523-b92577c0c142 // indirect
+	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.4.0 // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.24 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/onsi/ginkgo/v2 v2.21.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.23.0 // indirect
 	github.com/pires/go-proxyproto v0.8.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
