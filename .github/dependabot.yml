@@ -8,7 +8,7 @@ updates:
       day: "monday"  # Добавлен день недели для запуска1
       time: "00:00"
       timezone: "UTC"  # Добавлена явная временная зона
-    open-pull-requests-limit: 60
+    open-pull-requests-limit: 120
     reviewers:
       - "civisrom"
     labels:
