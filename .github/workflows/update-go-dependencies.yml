@@ -1,33 +1,27 @@
 name: Update Go Dependencies
-
 on:
   schedule:
     - cron: '0 0 * * 1'  # Запуск каждую неделю в понедельник в 00:00 UTC
   workflow_dispatch:      # Возможность ручного запуска
-
 permissions:
   contents: write        # Явное указание разрешений
-
 jobs:
   update:
     runs-on: ubuntu-latest  # Используем последнюю версию Ubuntu
     
     timeout-minutes: 30     # Добавляем таймаут для предотвращения зависания
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0    # Загружаем всю историю
           token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           check-latest: true
           cache: true       # Включаем кэширование модулей
-
       - name: Ensure go.mod and go.sum exist
         run: |
           if [ ! -f go.mod ]; then
@@ -39,27 +33,42 @@ jobs:
             echo "go.sum file not found, initializing it..."
             go mod tidy
           fi
-
       - name: Clean Go module cache
         run: |
           go clean -modcache
           go clean -cache
-
       - name: Update dependencies
         id: update
         run: |
           set -euo pipefail  # Строгий режим для bash
-
-          echo "Updating all dependencies except gvisor and telego..."
-          go list -m all | awk '{print $1}' | grep -v -E '^(gvisor.dev/gvisor|github.com/mymmrac/telego)$' | xargs -r go get -u
-
+          echo "Updating all dependencies except gvisor, telego, and problematic modules..."
+          
+          # Исключаем проблемные модули
+          EXCLUDE_MODULES="gvisor.dev/gvisor|github.com/mymmrac/telego|github.com/bos-hieu/mongostore|github.com/googleapis/gnostic"
+          
+          # Обновляем модули с более осторожным подходом
+          go list -m all | awk '{print $1}' | grep -v -E "^($EXCLUDE_MODULES)$" | while read mod; do
+            echo "Updating $mod..."
+            go get -u $mod || echo "Failed to update $mod, skipping..."
+          done
+          
+          # Модуль с toml - зафиксировать конкретную версию
+          go get github.com/BurntSushi/toml@v1.4.1-0.20240526193622-a339e1f7089c
+          
+          # Зафиксировать версию go-spew для совместимости с k8s.io модулями
+          go get github.com/davecgh/go-spew@v1.1.2-0.20180830191138-d8f796af33cc
+          
+          # Исправление для mongostore
+          go mod edit -replace github.com/bos-hieu/mongostore=github.com/laziness-coders/mongostore@latest
+          
+          # Исправление для gnostic
+          go mod edit -replace github.com/googleapis/gnostic=github.com/google/gnostic@latest
+          
           echo "Tidying up modules..."
           go mod tidy
           go mod verify || exit 1
-
           echo "Updated dependencies:"  
           go list -m -u all | grep -v "(deleting)" || true
-
       - name: Check for changes
         id: check
         run: |
@@ -71,7 +80,6 @@ jobs:
             echo "Changes detected in dependencies:" 
             git diff go.mod || true
           fi
-
       - name: Commit and push changes
         if: steps.check.outputs.changes == 'true'
         run: |
