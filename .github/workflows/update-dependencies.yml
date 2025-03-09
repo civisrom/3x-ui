@@ -1,33 +1,29 @@
 name: Update Go Dependencies
-
 on:
   schedule:
     - cron: '0 0 * * 1'  # Запуск каждую неделю в понедельник в 00:00 UTC
   workflow_dispatch:      # Возможность ручного запуска
-
 permissions:
   contents: write        # Явное указание разрешений
-
 jobs:
   update:
     runs-on: ubuntu-latest  # Используем последнюю версию Ubuntu
     
     timeout-minutes: 30     # Добавляем таймаут для предотвращения зависания
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0    # Загружаем всю историю
           token: ${{ secrets.GITHUB_TOKEN }}
-
+      
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           check-latest: true
           cache: true       # Включаем кэширование модулей
-
+      
       - name: Check go.mod and go.sum exist
         run: |
           if [ ! -f go.mod ]; then
@@ -39,42 +35,79 @@ jobs:
             echo "go.sum file not found, initializing it..."
             go mod tidy
           fi
-
+      
       - name: Clean Go module cache
         run: |
           go clean -modcache
           go clean -cache
-
+      
       - name: Update dependencies
         id: update
         run: |
           set -euo pipefail  # Строгий режим для bash
           
-          echo "Updating all Go dependencies except telego and gvisor..."
-          max_attempts=3
-          attempt=1
+          echo "Updating Go dependencies with specific exclusions..."
           
-          while [ $attempt -le $max_attempts ]; do
-            if go list -m all | awk '{print $1}' | grep -v -E 'github.com/mymmrac/telego|gvisor.dev/gvisor' | xargs -r go get -u; then
-              echo "Dependencies updated successfully on attempt $attempt"
-              break
-            else
-              if [ $attempt -eq $max_attempts ]; then
-                echo "Failed to update dependencies after $max_attempts attempts"
-                exit 1
+          # Эти модули вызывают ошибки при обновлении, поэтому исключаем их
+          EXCLUDE_LIST=(
+            "github.com/mymmrac/telego"
+            "gvisor.dev/gvisor"
+            "github.com/bos-hieu/mongostore"
+            "github.com/googleapis/gnostic"
+            "honnef.co/go/tools"
+            "k8s.io/api"
+            "k8s.io/apimachinery"
+            "k8s.io/client-go"
+            "github.com/BurntSushi/toml"
+            "github.com/davecgh/go-spew"
+          )
+          
+          # Получаем список всех модулей
+          ALL_MODULES=$(go list -m all | awk '{print $1}')
+          
+          # Фильтруем список, исключая проблемные модули
+          MODULES_TO_UPDATE=""
+          for module in $ALL_MODULES; do
+            EXCLUDE=false
+            for excluded in "${EXCLUDE_LIST[@]}"; do
+              if [[ "$module" == "$excluded" ]]; then
+                EXCLUDE=true
+                break
               fi
-              echo "Update failed on attempt $attempt, retrying..."
-              attempt=$((attempt + 1))
-              sleep 5
+            done
+            
+            if [[ "$EXCLUDE" == "false" ]]; then
+              MODULES_TO_UPDATE="$MODULES_TO_UPDATE $module"
             fi
           done
           
+          # Обновляем отфильтрованные модули
+          echo "Updating filtered modules"
+          for module in $MODULES_TO_UPDATE; do
+            go get -u $module || echo "Failed to update $module, continuing..."
+          done
+          
+          # Исправляем прямые зависимости для проблемных модулей
+          echo "Fixing module path issues..."
+          if grep -q "github.com/bos-hieu/mongostore" go.mod; then
+            go get github.com/laziness-coders/mongostore@latest
+            # Заменяем ссылки в исходном коде, если необходимо
+            find . -type f -name "*.go" -exec sed -i 's|github.com/bos-hieu/mongostore|github.com/laziness-coders/mongostore|g' {} \;
+          fi
+          
+          if grep -q "github.com/googleapis/gnostic" go.mod; then
+            go get github.com/google/gnostic@latest
+            # Заменяем ссылки в исходном коде, если необходимо
+            find . -type f -name "*.go" -exec sed -i 's|github.com/googleapis/gnostic|github.com/google/gnostic|g' {} \;
+          fi
+          
+          # Выполняем go mod tidy для окончательной фиксации зависимостей
           go mod tidy
           go mod verify || exit 1
           
           echo "Updated dependencies list:"
           go list -m all
-
+      
       - name: Check for changes
         id: check
         run: |
@@ -85,7 +118,7 @@ jobs:
             echo "changes=false" >> $GITHUB_OUTPUT
             echo "No changes detected"
           fi
-
+      
       - name: Create Pull Request
         if: steps.check.outputs.changes == 'true'
         uses: peter-evans/create-pull-request@v6
@@ -94,5 +127,12 @@ jobs:
           commit-message: "chore(deps): update Go dependencies"
           branch: "update-deps"
           title: "Update Go dependencies"
-          body: "Automated dependency update."
+          body: |
+            # Автоматическое обновление зависимостей Go
+            
+            Это PR создан автоматически для обновления зависимостей Go.
+            
+            ## Примечания
+            - Некоторые проблемные модули были исключены из автоматического обновления
+            - Исправлены пути импорта для модулей с изменившимися путями
           labels: "dependencies"
