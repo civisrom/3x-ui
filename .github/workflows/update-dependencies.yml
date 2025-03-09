@@ -50,12 +50,12 @@ jobs:
         run: |
           set -euo pipefail  # Строгий режим для bash
           
-          echo "Updating all Go dependencies..."
+          echo "Updating all Go dependencies except telego and gvisor..."
           max_attempts=3
           attempt=1
           
           while [ $attempt -le $max_attempts ]; do
-            if go get -u ./...; then
+            if go list -m all | awk '{print $1}' | grep -v -E 'github.com/mymmrac/telego|gvisor.dev/gvisor' | xargs -r go get -u; then
               echo "Dependencies updated successfully on attempt $attempt"
               break
             else
