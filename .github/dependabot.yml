@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Go модули
+  # Go модули1
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
