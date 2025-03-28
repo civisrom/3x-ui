@@ -1,7 +1,6 @@
 module x-ui
 
 go 1.24.1
-
 require (
 	github.com/gin-contrib/gzip v1.2.2
 	github.com/gin-contrib/sessions v1.0.2
@@ -66,7 +65,7 @@ require (
 	github.com/refraction-networking/utls v1.6.7 // indirect
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	github.com/sagernet/sing v0.6.4 // indirect
+	github.com/sagernet/sing v0.6.5 // indirect
 	github.com/sagernet/sing-shadowsocks v0.2.7 // indirect
 	github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38 // indirect
 	github.com/seiflotfy/cuckoofilter v0.0.0-20240715131351-a2f2c23f1771 // indirect
